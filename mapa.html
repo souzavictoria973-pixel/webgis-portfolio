@@ -1,0 +1,28 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Mapa APP - Miranda/MS</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style> #map { height: 100vh; } body { margin: 0; } </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    var map = L.map("map").setView([-20.24, -56.38], 11);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "OpenStreetMap"
+    }).addTo(map);
+
+    fetch("http://127.0.0.1:8001/app-hidrografia")
+      .then(function (r) { return r.json(); })
+      .then(function (dados) {
+        L.geoJSON(dados, {
+          style: { color: "green", weight: 1, fillOpacity: 0.4 }
+        }).addTo(map);
+      });
+  </script>
+</body>
+</html>
