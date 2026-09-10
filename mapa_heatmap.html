@@ -1,0 +1,61 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Heatmap de Oportunidade - Campo Grande/MS</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    #map { height: 100vh; }
+    body { margin: 0; font-family: Arial, sans-serif; }
+    .legenda { background: white; padding: 10px; line-height: 20px; font-size: 13px; box-shadow: 0 0 8px rgba(0,0,0,0.3); }
+    .legenda i { width: 18px; height: 18px; float: left; margin-right: 8px; opacity: 0.8; }
+    .titulo { position: absolute; top: 10px; left: 50px; z-index: 1000; background: white; padding: 8px 14px; box-shadow: 0 0 8px rgba(0,0,0,0.3); font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="titulo">Densidade Populacional - Oportunidade de Localizacao<br><small>Campo Grande/MS - Censo 2022</small></div>
+  <div id="map"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    var map = L.map("map").setView([-20.47, -54.62], 12);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "OpenStreetMap" }).addTo(map);
+
+    function cor(s) {
+      return s > 80 ? "#800026" :
+             s > 60 ? "#BD0026" :
+             s > 40 ? "#E31A1C" :
+             s > 20 ? "#FC4E2A" :
+             s > 10 ? "#FD8D3C" :
+             s > 5  ? "#FEB24C" : "#FFEDA0";
+    }
+
+    fetch("http://127.0.0.1:8001/heatmap")
+      .then(function (r) { return r.json(); })
+      .then(function (dados) {
+        var camada = L.geoJSON(dados, {
+          style: function (f) {
+            return { fillColor: cor(f.properties.score), weight: 0.5, color: "#999", fillOpacity: 0.7 };
+          },
+          onEachFeature: function (f, layer) {
+            layer.bindPopup("<b>Setor:</b> " + f.properties.cd_setor +
+                            "<br><b>Populacao:</b> " + f.properties.pop +
+                            "<br><b>Score:</b> " + f.properties.score);
+          }
+        }).addTo(map);
+        map.fitBounds(camada.getBounds());
+      });
+
+    var legenda = L.control({ position: "bottomright" });
+    legenda.onAdd = function () {
+      var div = L.DomUtil.create("div", "legenda");
+      var faixas = [0, 5, 10, 20, 40, 60, 80];
+      div.innerHTML = "<b>Score</b><br>";
+      for (var i = 0; i < faixas.length; i++) {
+        div.innerHTML += '<i style="background:' + cor(faixas[i] + 1) + '"></i> ' + faixas[i] + (faixas[i + 1] ? "&ndash;" + faixas[i + 1] + "<br>" : "+");
+      }
+      return div;
+    };
+    legenda.addTo(map);
+  </script>
+</body>
+</html>
