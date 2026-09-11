@@ -51,10 +51,35 @@ strongest potential, based on population density.
 
 ---
 
+## Project 3 — Average Carbon Stock by Municipality (CAR × Google Earth Engine)
+**Mato Grosso do Sul (statewide)** · *in progress*
+
+Joins the state's rural property registry (CAR/SICAR) with a public Google
+Earth Engine carbon dataset to estimate the average carbon stock held by
+registered rural properties, per municipality.
+
+- CAR shapefile (imóveis rurais) and IBGE municipal mesh loaded into PostGIS,
+  reprojected to EPSG:31981 (`importar_car.py`, `schema_carbono.sql`)
+- Each property assigned to a municipality by spatial join (representative
+  point within municipal boundary)
+- Zonal mean of `NASA/ORNL/biomass_carbon_density/v1` (aboveground +
+  belowground biomass carbon, Mg C/ha) computed per municipality via the
+  Earth Engine Python API (`gee_carbono.py`)
+- Result joined back to CAR area per municipality to get an estimated total
+  carbon stock, served as GeoJSON and rendered as a choropleth
+  (`carregar_carbono.py`, `/carbono` endpoint, `mapa_carbono.html`)
+
+**Pipeline:** `importar_car.py` → `gee_carbono.py` → `carregar_carbono.py` → `/carbono` → `mapa_carbono.html`
+
+**Map:** `mapa_carbono.html`
+
+---
+
 ## Skills demonstrated
 
 - Spatial databases and SQL (PostGIS: `ST_Area`, `ST_Length`, `ST_Buffer`, `ST_Union`, `ST_Transform`, `ST_AsGeoJSON`)
-- Data integration (IBGE census data joined to territorial meshes, type handling, validation)
+- Data integration (IBGE census data and CAR rural registry joined to territorial meshes, type handling, validation)
+- Remote sensing / zonal statistics with the Google Earth Engine Python API
 - REST API development (FastAPI serving GeoJSON, CORS)
 - Web mapping (Leaflet: choropleth, popups, legends)
 - Coordinate reference systems and reprojection
@@ -69,7 +94,12 @@ PostgreSQL · PostGIS · Docker · Python · FastAPI · psycopg2 · Leaflet · Q
 1. Start PostGIS (Docker) and load the layers
 2. `pip install -r requirements.txt`
 3. `uvicorn main:app --reload --port 8001`
-4. Open `mapa.html` or `mapa_heatmap.html` in a browser
+4. Open `mapa.html`, `mapa_heatmap.html` or `mapa_carbono.html` in a browser
+
+For Project 3, run the pipeline once before starting the API:
+`psql -f schema_carbono.sql` → `python importar_car.py <municipios.shp> <car.shp>` →
+`earthengine authenticate` + `python gee_carbono.py > carbono_municipios.csv` →
+`python carregar_carbono.py carbono_municipios.csv`
 
 ## Author
 
